@@ -360,8 +360,8 @@ type File struct {
 // Link returns a full path to the download URL for a File.
 //
 // It requires the Bot Token to create the link.
-func (f *File) Link(token string) string {
-	return fmt.Sprintf(FileEndpoint, token, f.FilePath)
+func (f *File) Link(token, host string) string {
+	return fmt.Sprintf(FileEndpoint, host, token, f.FilePath)
 }
 
 // ReplyKeyboardMarkup allows the Bot to set a custom keyboard.

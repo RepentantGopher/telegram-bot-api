@@ -1,2 +1,5 @@
 .idea/
 coverage.out
+glide.yaml
+glide.lock
+vendor/

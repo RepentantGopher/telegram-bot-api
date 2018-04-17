@@ -22,6 +22,8 @@ import (
 
 // BotAPI allows you to interact with the Telegram Bot API.
 type BotAPI struct {
+	host string
+
 	Token  string `json:"token"`
 	Debug  bool   `json:"debug"`
 	Buffer int    `json:"buffer"`
@@ -34,7 +36,7 @@ type BotAPI struct {
 //
 // It requires a token, provided by @BotFather on Telegram.
 func NewBotAPI(token string) (*BotAPI, error) {
-	return NewBotAPIWithClient(token, &http.Client{})
+	return NewBotApiWithHost(token, DefaultHost)
 }
 
 // NewBotAPIWithClient creates a new BotAPI instance
@@ -42,7 +44,25 @@ func NewBotAPI(token string) (*BotAPI, error) {
 //
 // It requires a token, provided by @BotFather on Telegram.
 func NewBotAPIWithClient(token string, client *http.Client) (*BotAPI, error) {
+	return NewBotAPIWithClientAndHost(token, DefaultHost, client)
+}
+
+// NewBotAPIWithHost creates a new BotAPI instance with custom host for telegram backend.
+// Use it to communicate with backend via proxy.
+//
+// It requires a token, provided by @BotFather on Telegram.
+func NewBotApiWithHost(token, host string) (*BotAPI, error) {
+	return NewBotAPIWithClientAndHost(token, host, &http.Client{})
+}
+
+// NewBotAPIWithClientAndHost creates a new BotAPI instance
+// and allows you to pass a http.Client and custom host for telegram backend.
+// Use it to communicate with backend via proxy.
+//
+// It requires a token, provided by @BotFather on Telegram.
+func NewBotAPIWithClientAndHost(token, host string, client *http.Client) (*BotAPI, error) {
 	bot := &BotAPI{
+		host:   host,
 		Token:  token,
 		Client: client,
 		Buffer: 100,
@@ -60,7 +80,7 @@ func NewBotAPIWithClient(token string, client *http.Client) (*BotAPI, error) {
 
 // MakeRequest makes a request to a specific endpoint with our token.
 func (bot *BotAPI) MakeRequest(endpoint string, params url.Values) (APIResponse, error) {
-	method := fmt.Sprintf(APIEndpoint, bot.Token, endpoint)
+	method := fmt.Sprintf(APIEndpoint, bot.host, bot.Token, endpoint)
 
 	resp, err := bot.Client.PostForm(method, params)
 	if err != nil {
@@ -185,7 +205,7 @@ func (bot *BotAPI) UploadFile(endpoint string, params map[string]string, fieldna
 		return APIResponse{}, errors.New(ErrBadFileType)
 	}
 
-	method := fmt.Sprintf(APIEndpoint, bot.Token, endpoint)
+	method := fmt.Sprintf(APIEndpoint, bot.host, bot.Token, endpoint)
 
 	req, err := http.NewRequest("POST", method, nil)
 	if err != nil {
@@ -233,7 +253,7 @@ func (bot *BotAPI) GetFileDirectURL(fileID string) (string, error) {
 		return "", err
 	}
 
-	return file.Link(bot.Token), nil
+	return file.Link(bot.Token, bot.host), nil
 }
 
 // GetMe fetches the currently authenticated bot.
